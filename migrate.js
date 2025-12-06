@@ -1,29 +1,23 @@
+const fs = require('fs');
+const path = require('path');
 const db = require('./db');
 
 async function migrate() {
     try {
-        console.log('Migrating database...');
+        console.log('Veritabanı migrasyonu başlatılıyor...');
 
-        // Add new columns
-        await db.query('ALTER TABLE emlak ADD COLUMN IF NOT EXISTS mapbox_id VARCHAR(255) UNIQUE;');
-        await db.query('ALTER TABLE emlak ADD COLUMN IF NOT EXISTS lat DOUBLE PRECISION;');
-        await db.query('ALTER TABLE emlak ADD COLUMN IF NOT EXISTS lon DOUBLE PRECISION;');
-        await db.query('ALTER TABLE emlak ADD COLUMN IF NOT EXISTS fiyat INTEGER DEFAULT 10;');
+        const schemaPath = path.join(__dirname, 'schema.sql');
+        const sql = fs.readFileSync(schemaPath, 'utf8');
 
-        // Modify existing columns
-        await db.query('ALTER TABLE emlak ALTER COLUMN x SET DEFAULT 0;');
-        await db.query('ALTER TABLE emlak ALTER COLUMN y SET DEFAULT 0;');
+        console.log('schema.sql okundu, çalıştırılıyor...');
+        await db.query(sql);
 
-        // Drop NOT NULL constraints if they exist (Postgres doesn't support IF EXISTS for constraints easily in ALTER COLUMN, 
-        // but dropping NOT NULL is safe even if it's already nullable usually, or we catch error)
-        try { await db.query('ALTER TABLE emlak ALTER COLUMN x DROP NOT NULL;'); } catch (e) { console.log('x constraint update info:', e.message); }
-        try { await db.query('ALTER TABLE emlak ALTER COLUMN y DROP NOT NULL;'); } catch (e) { console.log('y constraint update info:', e.message); }
-
-        console.log('Migration successful!');
+        console.log('Tablolar başarıyla oluşturuldu/güncellendi.');
     } catch (err) {
-        console.error('Migration failed:', err);
+        console.error('Migrasyon hatası:', err);
+        process.exit(1);
     } finally {
-        process.exit();
+        process.exit(0);
     }
 }
 
