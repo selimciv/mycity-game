@@ -630,12 +630,17 @@
                 const targetScale = 0.05 * Math.pow(2, currentZoom - 18);
                 this.player.setScale(targetScale);
 
-                // Diğer oyuncuları da ölçekle
+                // Diğer oyuncuları da ölçekle VE Pozisyonlarını Güncelle
                 this.otherPlayers.getChildren().forEach(container => {
-                    // Container içindeki Sprite'ı bulmamız lazım. 
-                    // Container'ın ilk çocuğu sprite idi.
+                    // 1. Ölçekleme
                     const sprite = container.list[0];
                     if (sprite) sprite.setScale(targetScale);
+
+                    // 2. Pozisyon Güncelleme (Reprojection)
+                    if (container.lat && container.lon) {
+                        const point = map.project([container.lon, container.lat]);
+                        container.setPosition(point.x, point.y);
+                    }
                 });
 
                 // --- FİZİK GÜNCELLEMESİ (SABİT DÜNYA HIZI) ---
@@ -764,12 +769,21 @@
                 this.socket.on('playerMoved', (pInfo) => {
                     self.otherPlayers.getChildren().forEach((otherContainer) => {
                         if (pInfo.playerId === otherContainer.playerId) {
-                            // Container'ı taşı
-                            otherContainer.setPosition(pInfo.x, pInfo.y);
+                            // Lat/Lon Güncelle
+                            if (pInfo.lat && pInfo.lon) {
+                                otherContainer.lat = pInfo.lat;
+                                otherContainer.lon = pInfo.lon;
+                            }
 
-                            // İçindeki Sprite'ı döndür (Container içindeki ilk eleman sprite olsun)
-                            const sprite = otherContainer.getAt(0);
-                            if (pInfo.angle !== undefined) {
+                            // Hemen pozisyonunu da güncelle
+                            if (otherContainer.lat && otherContainer.lon) {
+                                const point = map.project([otherContainer.lon, otherContainer.lat]);
+                                otherContainer.setPosition(point.x, point.y);
+                            }
+
+                            // Sprite döndür
+                            const sprite = otherContainer.list[0];
+                            if (sprite && pInfo.angle !== undefined) {
                                 sprite.setAngle(pInfo.angle);
                             }
                         }
@@ -834,9 +848,20 @@
             }
 
             addOtherPlayer(playerInfo) {
-                // Diğer oyuncuları 'Container' olarak tutalım (Sprite + Text beraber hareket etsin)
-                const container = this.add.container(playerInfo.x, playerInfo.y);
+                // Konum hesapla
+                let startX = playerInfo.x;
+                let startY = playerInfo.y;
+
+                if (playerInfo.lat && playerInfo.lon) {
+                    const point = map.project([playerInfo.lon, playerInfo.lat]);
+                    startX = point.x;
+                    startY = point.y;
+                }
+
+                const container = this.add.container(startX, startY);
                 container.playerId = playerInfo.playerId;
+                container.lat = playerInfo.lat;
+                container.lon = playerInfo.lon;
 
                 // 1. Sprite
                 const sprite = this.add.sprite(0, 0, 'drone');
