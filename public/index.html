@@ -960,11 +960,21 @@
                             // Haritayı bu noktaya kaydır (Böylece karakter o yola ışınlanmış gibi olur)
                             const newCenter = map.unproject([testX, testY]);
                             map.jumpTo({ center: newCenter, animate: false });
+                            
+                            // Update local lat/lon state
+                            this.playerLat = newCenter.lat;
+                            this.playerLon = newCenter.lng;
 
                             found = true;
-                            // Sunucuya yeni konumu bildir
+                            // Sunucuya yeni konumu bildir (Lat/Lon ile!)
                             if (this.socket) {
-                                this.socket.emit('oyuncuHareketi', { x: this.player.x, y: this.player.y, angle: this.player.angle });
+                                this.socket.emit('oyuncuHareketi', { 
+                                    x: 0, 
+                                    y: 0, 
+                                    lat: this.playerLat, 
+                                    lon: this.playerLon,
+                                    angle: this.player.angle 
+                                });
                             }
                             break;
                         }
