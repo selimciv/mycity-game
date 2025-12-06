@@ -50,13 +50,13 @@ app.get('/', (req, res) => {
 // 2. Kayıt Rotası (MOCK)
 app.post('/kayit', async (req, res) => {
     try {
-        const { eposta, sifre } = req.body;
+        const { eposta, sifre, kullaniciAdi } = req.body;
 
         if (!eposta || !sifre) {
             return res.status(400).json({ mesaj: "E-posta ve şifre zorunludur." });
         }
 
-        console.log(`[MOCK] Yeni kullanıcı kayıt oldu: ${eposta}`);
+        console.log(`[MOCK] Yeni kullanıcı kayıt oldu: ${eposta} (${kullaniciAdi || 'Anonim'})`);
 
         // Veritabanı yerine başarılı yanıt dönüyoruz
         res.status(201).json({ mesaj: "Kayıt Başarılı (Mock)" });
@@ -144,6 +144,9 @@ io.on('connection', async (socket) => {
                     INSERT INTO karakterler (oyuncu_id, karakter_adi, tur_id, seviye, tecrube_puani, para, mevcut_x, mevcut_y)
                     VALUES ($1, $2, 1, 1, 0, 100, $3, $4) RETURNING *
                 `;
+                // NOT: Mock kayıtta 'kullaniciAdi' backend'e ulaşmıyor çünkü /kayit sadece logluyor.
+                // Gerçek senaryoda buraya req.body'den değil, registration sırasında DB'ye yazılan veri gelmeli.
+                // Şimdilik 'Oyuncu userId' yerine varsayılan bir isim atıyoruz.
                 const created = await db.query(createCharSql, [userId, `Oyuncu ${userId}`, randomX, randomY]);
                 character = created.rows[0];
                 console.log(`Yeni karakter oluşturuldu: ${character.karakter_adi}`);
@@ -161,11 +164,15 @@ io.on('connection', async (socket) => {
         y: character ? character.mevcut_y : Math.floor(Math.random() * 600),
         lat: character ? character.lat : 40.0789,
         lon: character ? character.lon : 29.5133,
+        username: character ? character.karakter_adi : `Misafir ${socket.id.substr(0, 4)}`,
         playerId: socket.id,
         dbId: userId,
         balance: character ? character.para : 1000,
         color: 0xff0000
     };
+
+    // Bağlantı Mesajı Yayınla
+    socket.broadcast.emit('yeniMesaj', { senderId: 'Sistem', text: `${players[socket.id].username} oyuna katıldı.` });
 
     // Mevcut oyuncuları yeni bağlanana gönder
     socket.emit('mevcutOyuncular', players);

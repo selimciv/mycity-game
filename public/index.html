@@ -210,6 +210,7 @@
         <div id="register-form-container" class="auth-section hidden">
             <div id="auth-box">
                 <h2>Kayıt Ol</h2>
+                <input type="text" id="reg-username" placeholder="Kullanıcı Adı" />
                 <input type="email" id="reg-email" placeholder="E-posta" />
                 <input type="password" id="reg-password" placeholder="Şifre" />
                 <button id="reg-btn">Kayıt Ol</button>
@@ -880,7 +881,8 @@
                 });
 
                 // 2. İsim Etiketi
-                const nameTag = this.add.text(0, -30, playerInfo.playerId.substr(0, 5), {
+                const displayName = playerInfo.username || playerInfo.playerId.substr(0, 5);
+                const nameTag = this.add.text(0, -30, displayName, {
                     fontSize: '12px',
                     fill: '#FFFF00', // Sarı renk
                     stroke: '#000000',
@@ -1041,6 +1043,17 @@
         const loginBtn = document.getElementById('login-btn');
         const regBtn = document.getElementById('reg-btn');
 
+        // --- Auto-Login Logic ---
+        window.addEventListener('load', async () => {
+            const savedUserId = localStorage.getItem('mycity_userId');
+
+            if (savedUserId) {
+                console.log("Kayıtlı oturum bulundu:", savedUserId);
+                authOverlay.style.display = 'none';
+                startGame(savedUserId);
+            }
+        });
+
         // Form Geçişleri
         showRegisterBtn.addEventListener('click', () => {
             loginContainer.classList.add('hidden');
@@ -1077,6 +1090,10 @@
                 const result = await sendAuthRequest('/giris', { eposta, sifre });
                 console.log('Giriş Başarılı:', result);
 
+                // LocalStorage'a kaydet
+                localStorage.setItem('mycity_userId', result.dbId);
+                // username server'dan gelince ekleriz: if(result.username) localStorage.setItem('mycity_username', result.username);
+
                 // Başarılı giriş sonrası paneli gizle ve oyunu aç
                 authOverlay.style.display = 'none';
 
@@ -1091,11 +1108,12 @@
 
         // Kayıt Olma
         regBtn.addEventListener('click', async () => {
+            const kullaniciAdi = document.getElementById('reg-username').value;
             const eposta = document.getElementById('reg-email').value;
             const sifre = document.getElementById('reg-password').value;
 
             try {
-                const result = await sendAuthRequest('/kayit', { eposta, sifre });
+                const result = await sendAuthRequest('/kayit', { eposta, sifre, kullaniciAdi });
                 console.log('Kayıt Başarılı:', result);
                 alert('Kayıt Başarılı! Şimdi giriş yapabilirsiniz.');
 
