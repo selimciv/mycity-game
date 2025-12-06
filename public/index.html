@@ -581,6 +581,19 @@
 
                 // --- OYUN BAŞLATMA ---
 
+                // Auto-Login Logic (Phaser yüklendikten sonra çalışır)
+                const savedUserId = localStorage.getItem('mycity_userId');
+                if (savedUserId) {
+                    console.log("Kayıtlı oturum bulundu (Auto-Login):", savedUserId);
+                    document.getElementById('auth-overlay').style.display = 'none';
+                    // startGame henüz tanımlanmadıysa diye biraz bekleyebiliriz ama create içinde tanımlanıyor.
+                    // En doğrusu: startGame fonksiyonunu aşağıda tanımladıktan sonra çağırmak.
+                    // Veya delayedCall kullanmak.
+                    this.time.delayedCall(100, () => {
+                        if (window.startGame) window.startGame(savedUserId);
+                    });
+                }
+
                 window.startGame = (userId) => {
                     // Oyuna başlarken kamerayı kesinlikle karaktere odakla
                     if (this.playerLat && this.playerLon) {
@@ -1044,15 +1057,7 @@
         const regBtn = document.getElementById('reg-btn');
 
         // --- Auto-Login Logic ---
-        window.addEventListener('load', async () => {
-            const savedUserId = localStorage.getItem('mycity_userId');
 
-            if (savedUserId) {
-                console.log("Kayıtlı oturum bulundu:", savedUserId);
-                authOverlay.style.display = 'none';
-                startGame(savedUserId);
-            }
-        });
 
         // Form Geçişleri
         showRegisterBtn.addEventListener('click', () => {
