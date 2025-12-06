@@ -713,7 +713,7 @@
                     }
                     // else if KALDIRILDI: Oyuncu dururken haritayı zorla merkeze çekme.
                     // Bu sayede kullanıcı dururken rahatça zoom/pan yapabilir ve titreme olmaz.     // Sunucuya Bildir
-                    this.socket.emit('oyuncuHareketi', {
+                    this.socket.emit('playerMovement', {
                         x: 0, // Sprite X/Y artık önemsiz
                         y: 0,
                         lat: this.playerLat,
@@ -960,7 +960,7 @@
                             // Haritayı bu noktaya kaydır (Böylece karakter o yola ışınlanmış gibi olur)
                             const newCenter = map.unproject([testX, testY]);
                             map.jumpTo({ center: newCenter, animate: false });
-                            
+
                             // Update local lat/lon state
                             this.playerLat = newCenter.lat;
                             this.playerLon = newCenter.lng;
@@ -968,12 +968,12 @@
                             found = true;
                             // Sunucuya yeni konumu bildir (Lat/Lon ile!)
                             if (this.socket) {
-                                this.socket.emit('oyuncuHareketi', { 
-                                    x: 0, 
-                                    y: 0, 
-                                    lat: this.playerLat, 
+                                this.socket.emit('playerMovement', {
+                                    x: 0,
+                                    y: 0,
+                                    lat: this.playerLat,
                                     lon: this.playerLon,
-                                    angle: this.player.angle 
+                                    angle: this.player.angle
                                 });
                             }
                             break;

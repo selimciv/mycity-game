@@ -155,13 +155,15 @@ io.on('connection', async (socket) => {
     }
 
     // Oyuncular listesine ekle (DB'den geldiyse oradan, yoksa varsayılan)
-    // Oyuncular listesine ekle (DB'den geldiyse oradan, yoksa varsayılan)
+    // Oyuncular listesine ekle
     players[socket.id] = {
         x: character ? character.mevcut_x : Math.floor(Math.random() * 800),
         y: character ? character.mevcut_y : Math.floor(Math.random() * 600),
+        lat: character ? character.lat : 40.0789,
+        lon: character ? character.lon : 29.5133,
         playerId: socket.id,
         dbId: userId,
-        balance: character ? character.para : 1000, // Varsayılan Bakiye
+        balance: character ? character.para : 1000,
         color: 0xff0000
     };
 
@@ -179,6 +181,10 @@ io.on('connection', async (socket) => {
         if (players[socket.id]) {
             players[socket.id].x = movementData.x;
             players[socket.id].y = movementData.y;
+            players[socket.id].lat = movementData.lat; // Lat sakla
+            players[socket.id].lon = movementData.lon; // Lon sakla
+            players[socket.id].angle = movementData.angle;
+
             // Diğer oyunculara güncelleme gönder
             socket.broadcast.emit('playerMoved', players[socket.id]);
         }
