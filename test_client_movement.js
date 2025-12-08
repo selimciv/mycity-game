@@ -8,12 +8,29 @@ let direction = 1;
 socket.on('connect', () => {
     console.log('Test Client (Movement) Connected: ' + socket.id);
 
-    // Start moving
-    setInterval(() => {
-        x += 10 * direction;
-        if (x > 700 || x < 50) direction *= -1; // Bounce
+    // Test Versioning
+    socket.on('gameVersion', (v) => {
+        console.log('✅ Version Received:', v);
+    });
 
-        socket.emit('oyuncuHareketi', { x: x, y: y });
+    // Start moving
+    let angle = 0;
+    setInterval(() => {
+        x += 5 * direction;
+        angle += 10;
+
+        // Simulate movement data including rotation
+        const data = {
+            x: x,
+            y: y,
+            lat: 40.0 + (x / 10000),
+            lon: 29.0 + (y / 10000),
+            angle: angle,
+            rotation: angle * (Math.PI / 180) // Radians
+        };
+
+        // console.log('Sending movement:', data);
+        socket.emit('playerMovement', data);
     }, 500); // Move every 500ms
 });
 
@@ -21,9 +38,9 @@ socket.on('disconnect', () => {
     console.log('Test Client Disconnected');
 });
 
-// Keep alive for 30 seconds
+// Keep alive for 5 seconds (enough to test connection and version)
 setTimeout(() => {
     console.log('Test Client Exiting');
     socket.disconnect();
     process.exit(0);
-}, 30000);
+}, 5000);

@@ -16,6 +16,19 @@ let players = {};
 let crystals = {};
 let crystalIdCounter = 0;
 
+function getFormattedVersion() {
+    const now = new Date();
+    const pad = (n) => n.toString().padStart(2, '0');
+
+    const day = pad(now.getDate());
+    const month = pad(now.getMonth() + 1); // Aylar 0-11 arasıdır
+    const year = now.getFullYear();
+    const hour = pad(now.getHours());
+    const minute = pad(now.getMinutes());
+
+    return `V${day}.${month}.${year}.${hour}.${minute}`;
+}
+
 function generateRandomCrystal() {
     // Inegol koordinatları etrafında rastgele
     const centerLat = 40.0789;
@@ -183,6 +196,9 @@ io.on('connection', async (socket) => {
     // Bakiyeyi oyuncuya bildir
     socket.emit('bakiyeGuncellendi', players[socket.id].balance);
 
+    // Versiyon Bilgisini Gönder
+    socket.emit('gameVersion', getFormattedVersion());
+
     // Oyuncu hareket ettiğinde
     socket.on('playerMovement', (movementData) => {
         if (players[socket.id]) {
@@ -191,6 +207,7 @@ io.on('connection', async (socket) => {
             players[socket.id].lat = movementData.lat; // Lat sakla
             players[socket.id].lon = movementData.lon; // Lon sakla
             players[socket.id].angle = movementData.angle;
+            players[socket.id].rotation = movementData.rotation; // YENİ: Rotasyon (Radyan)
 
             // Diğer oyunculara güncelleme gönder
             socket.broadcast.emit('playerMoved', players[socket.id]);
